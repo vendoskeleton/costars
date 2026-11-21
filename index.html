@@ -337,6 +337,9 @@ function normalizeCredits(cc){
   });
   return map;
 }
+/* Crew jobs as words people use, most notable first */
+const JOB_WORDS = [['Director','director'],['Creator','creator'],['Screenplay','screenwriter'],['Writer','writer'],['Story','story writer'],['Producer','producer'],['Executive Producer','executive producer']];
+const jobWords = w => { const jobs = new Set(behind(w)); return JOB_WORDS.filter(([j]) => jobs.has(j)).map(([, word]) => word); };
 function roleText(w){
   const cast = w.roles.filter(r => r.kind === 'cast');
   const jobs = [...new Set(w.roles.filter(r => r.kind === 'crew').map(r => r.job))];
@@ -347,16 +350,14 @@ function roleText(w){
     const name = (ch || '').replace(/\s*\(voice\)\s*/i,'').trim();
     parts.push((voice ? 'voice' : 'actor') + (name ? ` as <i>${esc(name)}</i>` : ''));
   }
-  if (jobs.length) parts.push(esc(jobs.slice(0,3).join(', ').toLowerCase()) + (jobs.length > 3 ? '…' : ''));
+  const words = [...new Set(jobs.map(j => (JOB_WORDS.find(([k]) => k === j) || [, j.toLowerCase()])[1]))];
+  if (words.length) parts.push(esc(words.slice(0,3).join(', ')) + (words.length > 3 ? '…' : ''));
   const eps = Math.max(0, ...w.roles.map(r => r.episodes || 0));
   return parts.join(' · ') + (w.media === 'tv' && eps ? ` <span class="meta">(${plural(eps,'episode')})</span>` : '');
 }
 const character = w => { const c = w.roles.find(r => r.kind === 'cast' && r.character); return c ? c.character.replace(/\s*\(voice\)\s*/i,'').trim() : ''; };
 const behind = w => [...new Set(w.roles.filter(r => r.kind === 'crew').map(r => r.job))];
 const starring = w => w.roles.some(r => r.kind === 'cast' && !(r.order > 12));    /* billed in the top cast, not a cameo */
-/* Crew jobs as words people use, most notable first */
-const JOB_WORDS = [['Director','director'],['Creator','creator'],['Screenplay','screenwriter'],['Writer','writer'],['Story','story writer'],['Producer','producer'],['Executive Producer','executive producer']];
-const jobWords = w => { const jobs = new Set(behind(w)); return JOB_WORDS.filter(([j]) => jobs.has(j)).map(([, word]) => word); };
 
 /* ---------- person loading ---------- */
 async function loadPerson(id){
@@ -605,7 +606,7 @@ function trivia(works, selfOnly, profs, details, fam, n){
     const offScreen = [];
     works.forEach(w => {
       const entries = profs.map((p,i) => ({ i, w: p.credits.get(w.key) }));
-      const chars = entries.map(e => character(e.w) ? `${esc(n[e.i])} played <i>${esc(character(e.w))}</i>` : '').filter(Boolean);
+      const chars = entries.map(e => character(e.w) && starring(e.w) ? `${esc(n[e.i])} played <i>${esc(character(e.w))}</i>` : '').filter(Boolean);
       if (chars.length >= 2 && works.length <= 12) t.push(`In <b>${esc(w.title)}</b>, ${listJoin(chars)}.`);
       entries.forEach(e => {
         const words = jobWords(e.w), actors = entries.filter(o => o.i !== e.i && starring(o.w));
