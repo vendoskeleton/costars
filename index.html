@@ -20,7 +20,7 @@
    IDEA: a cinema marquee pairing two names, with the credits roll below
    PICTURE: overlapping portrait circles with the shared-project count huge between them
    COLOUR and TYPE: four schemes (Midnight default, Teal, Popcorn, Noir) chosen from header swatches; Anton for marquee numbers, Archivo for text
-   LAYOUT: one phone column: search band, marquee, trivia, films timeline, profiles, mutual collaborators */
+   LAYOUT: one phone column: search band, marquee, films timeline, Shared Trivia button (own page), profiles, mutual collaborators */
 :root{color-scheme:light dark;
  --ink:light-dark(#121214,#f2f1ee);--soft:light-dark(#5d5d66,#a9a9b3);
  --hd:#13243f;--hdt:#fff;--acc:light-dark(#d9472f,#ff7a66);--blue:light-dark(#2457d6,#8fb0ff);
@@ -80,7 +80,7 @@ h2{font:400 28px/1.1 Anton,Impact,sans-serif;margin:34px 0 12px;font-weight:400}
 .trivia{list-style:none;padding:0;margin:0;display:grid;gap:10px}
 .trivia li{background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid var(--line)}
 .films{list-style:none;padding:0;margin:0}
-.films li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.films li{display:grid;grid-template-columns:52px 50px minmax(0,1fr);gap:12px;padding:14px 0;border-top:1px solid var(--line)}
 .yr{font:400 26px/1 Anton,Impact,sans-serif;color:var(--acc);white-space:nowrap}
 .ft{font-weight:800;font-size:17px}
 .meta{color:var(--soft);font-size:14px}
@@ -106,7 +106,6 @@ h2{font:400 28px/1.1 Anton,Impact,sans-serif;margin:34px 0 12px;font-weight:400}
 .credits{font-size:13px;color:var(--soft);margin-top:36px;border-top:1px solid var(--line);padding-top:14px}
 .credits a{color:var(--soft)}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
-.films li{grid-template-columns:52px 50px minmax(0,1fr)}
 .films .post{width:50px;height:75px;border-radius:6px;object-fit:cover;background:#d9d6d0}
 .films .post.ph{font-size:20px}
 .setup{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:24px}
@@ -121,7 +120,6 @@ footer.credits{padding-bottom:max(24px,env(safe-area-inset-bottom))}
 .back{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink);margin:20px 0 6px}
 .trivhead{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;margin:10px 0 18px}
 .minifaces{display:flex}.minifaces .face{width:64px;border-width:3px;margin:0 -6px;box-shadow:none}
-.linkbtn{background:none;border:0;color:var(--soft);text-decoration:underline;font:13px Archivo,sans-serif;cursor:pointer;padding:8px 0}
 </style>
 </head>
 <body>
@@ -165,7 +163,7 @@ const token = () => TMDB_TOKEN || store.get('tmdbToken');
 const IMG = (path, size='w185') => path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
 const SPARQL = 'https://query.wikidata.org/sparql';
 const people = [];
-let includeSelf = false, lastIds = '';
+let includeSelf = false, runSeq = 0;
 
 
 /* ---------- color schemes ---------- */
@@ -209,8 +207,8 @@ async function sparql(q){
 const v = (b,k) => b[k] ? b[k].value : '';
 const qid = uri => uri.split('/').pop();
 const commons = (file, w=240) => file ? file.replace(/^http:/,'https:') + '?width=' + w : '';
-const ph = label => `<div class="ph" aria-hidden="true">${esc((label||'?')[0])}</div>`;
-const pic = (url, label, cls='') => url ? `<img class="${cls}" src="${esc(url)}" alt="${esc(label)}" loading="lazy">` : ph(label);
+const ph = (label, cls='') => `<div class="ph ${cls}" aria-hidden="true">${esc((label||'?')[0])}</div>`;
+const pic = (url, label, cls='') => url ? `<img class="${cls}" src="${esc(url)}" alt="${esc(label)}" loading="lazy">` : ph(label, cls);
 
 /* ---------- key setup ---------- */
 function showSetup(msg){
@@ -221,7 +219,6 @@ function showSetup(msg){
    <div class="row"><button class="btn" id="savetok">Save</button></div></section>`;
   $('#savetok').onclick = () => { store.set('tmdbToken', $('#tok').value.trim()); cache.clear(); intro(); };
 }
-if ($('#keybtn')) $('#keybtn').onclick = () => showSetup(TMDB_TOKEN ? 'A key is already built into this page. A key saved here is used only if the built-in one is removed.' : '');
 function intro(){
   if (!token()) return showSetup();
   $('#out').innerHTML = `<p class="status">Add at least one person. One person shows their frequent collaborators; two or three show what they've made together.</p>`;
@@ -235,7 +232,7 @@ async function searchPeople(text){
     desc: [p.known_for_department, (p.known_for || []).map(k => k.title || k.name).filter(Boolean).slice(0,2).join(', ')].filter(Boolean).join(' · ')
   }));
 }
-let timer, seqN = 0;
+let timer, seqN = 0, lastList = [];
 $('#q').addEventListener('input', e => {
   clearTimeout(timer);
   const t = e.target.value.trim();
@@ -245,6 +242,7 @@ $('#q').addEventListener('input', e => {
     try {
       const list = await searchPeople(t);
       if (seq !== seqN) return;
+      lastList = list;
       box.innerHTML = list.length ? list.map((p,i) => `<button data-i="${i}">${pic(p.img,p.label)}<span>${esc(p.label)}<small>${esc(p.desc)}</small></span></button>`).join('')
         : '<div class="note" style="padding:14px">No people found.</div>';
       box.hidden = false;
@@ -257,11 +255,16 @@ $('#q').addEventListener('input', e => {
   }, 250);
 });
 document.addEventListener('click', e => { if (!e.target.closest('.search')) $('#sugg').hidden = true; });
+$('#q').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { clearTimeout(timer); seqN++; $('#sugg').hidden = true; }
+  if (e.key === 'Enter' && !$('#sugg').hidden && lastList[0]) { e.preventDefault(); addPerson(lastList[0]); }
+});
 
 function addPerson(p){
   if (!p || people.some(x => x.id === p.id)) return;
   if (people.length >= 3) people.shift();
   people.push(p);
+  clearTimeout(timer); seqN++; lastList = [];
   $('#q').value = ''; $('#sugg').hidden = true;
   renderChips();
 }
@@ -356,7 +359,7 @@ const onScreen = w => w.roles.some(r => r.kind === 'cast');
 async function loadPerson(id){
   const p = await tmdb(`/person/${id}`, { append_to_response: 'combined_credits,external_ids' });
   const credits = normalizeCredits(p.combined_credits || {});
-  return { id: p.id, label: p.name, img: IMG(p.profile_path, 'w342'), thumb: IMG(p.profile_path), birth: p.birthday || '', death: p.deathday || '',
+  return { id: p.id, label: p.name, img: IMG(p.profile_path, 'w342'), birth: p.birthday || '', death: p.deathday || '',
     birthplace: p.place_of_birth || '', dept: p.known_for_department || '', bio: p.biography || '', wd: (p.external_ids || {}).wikidata_id || '',
     imdb: (p.external_ids || {}).imdb_id || '', credits, realCount: [...credits.values()].filter(w => !w.self).length,
     awards: [], noms: 0, spouses: [], height: 0 };
@@ -444,17 +447,19 @@ function alignFaces(root){
 }
 
 /* ---------- run ---------- */
-async function run(){
+async function run(keepScroll = false){
   if (!people.length) return;
   if (!token()) return showSetup();
-  const ids = people.map(p => p.id);
-  lastIds = ids.join('-');
-  history.replaceState(null, '', '#' + lastIds);
-  loading(people.length === 1 ? 'Rolling the credits…' : 'Checking the call sheets…');
+  const ids = people.map(p => p.id), seq = ++runSeq, y = scrollY;
+  history.replaceState(null, '', '#' + ids.join('-'));
+  if (!keepScroll) loading(people.length === 1 ? 'Rolling the credits…' : 'Checking the call sheets…');
   try {
     const profs = await Promise.all(ids.map(loadPerson));
-    if (profs.length === 1) await runSingle(profs[0]); else await runCompare(profs);
-  } catch (e) { e.message === 'NO_KEY' ? showSetup() : fail(e); }
+    const current = () => seq === runSeq;          /* a newer search started: drop this one */
+    if (!current()) return;
+    if (profs.length === 1) await runSingle(profs[0], current); else await runCompare(profs, current);
+    if (keepScroll && current()) scrollTo(0, y);
+  } catch (e) { if (seq === runSeq) e.message === 'NO_KEY' ? showSetup() : fail(e); }
 }
 
 function marquee(ps, big, sub){
@@ -493,8 +498,9 @@ function bindAdd(){
   });
 }
 
-async function runSingle(p){
+async function runSingle(p, current){
   await enrichWikidata([p]);
+  if (!current()) return;
   const works = [...p.credits.values()].filter(w => !w.self);
   const sorted = works.filter(w => w.votes >= 300).sort((a,b) => b.vote - a.vote);
   const html = [marquee([p], p.realCount, `films and shows for ${esc(p.label)}`), `<h2>Profile</h2><div class="prof">${profileCard(p)}</div>`];
@@ -505,14 +511,10 @@ async function runSingle(p){
   if (!p.wd) { $('#mutbox').innerHTML = '<p class="note">No Wikidata link for this person, so collaborators are unavailable.</p>'; return; }
   try {
     const list = await collaborators([p.wd], 15);
+    if (!current()) return;
     $('#mutbox').innerHTML = `<p class="note">Tap someone to add them, then hit Find connections.</p>` + personButtons(list, x => plural(x.n,'project'));
     bindAdd();
   } catch { $('#mutbox').innerHTML = '<p class="note">Wikidata took too long. Try again in a moment.</p>'; }
-}
-function dedupePeople(rows){
-  const m = new Map();
-  rows.forEach(r => { const id = qid(v(r,'x')); if (!m.has(id)) m.set(id, { wd: id, label: v(r,'name'), img: commons(v(r,'img'),160), tmdb: v(r,'tmdb'), n: +v(r,'n'), row: r }); });
-  return [...m.values()];
 }
 
 function filmRow(w, entries, details){
@@ -524,7 +526,7 @@ function filmRow(w, entries, details){
     <div class="ft"><a href="https://www.themoviedb.org/${w.media}/${w.id}" target="_blank" rel="noopener">${esc(w.title)}</a></div><div class="meta">${meta}</div><div class="who">${who}</div></div></li>`;
 }
 
-async function runCompare(profs){
+async function runCompare(profs, current){
   const keys = [...profs[0].credits.keys()].filter(k => profs.every(p => p.credits.has(k)));
   const shared = keys.map(k => profs[0].credits.get(k));
   const real = shared.filter(w => !profs.some(p => p.credits.get(w.key).self));
@@ -536,11 +538,11 @@ async function runCompare(profs){
   const [fam] = await Promise.all([
     enrichWikidata(profs).catch(() => []),
     ...toFetch.map(w => tmdb(`/${w.media}/${w.id}`, w.media === 'movie' ? { append_to_response: 'credits' } : {}).then(d => {
-      details[w.key] = { genres: (d.genres || []).map(g => g.name), runtime: d.runtime || 0, revenue: d.revenue || 0, budget: d.budget || 0,
-        directors: w.media === 'movie' ? (d.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name) : (d.created_by || []).map(c => c.name),
-        tagline: d.tagline || '' };
+      details[w.key] = { genres: (d.genres || []).map(g => g.name), runtime: d.runtime || 0, revenue: d.revenue || 0,
+        directors: w.media === 'movie' ? (d.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name) : (d.created_by || []).map(c => c.name) };
     }).catch(() => {}))
   ]);
+  if (!current()) return;
 
   const names = profs.map(p => p.label), short = profs.map(p => lastName(p.label));
   const html = [];
@@ -566,15 +568,16 @@ async function runCompare(profs){
   $('#trivbtn').onclick = () => { history.pushState({ trivia: true }, '', location.hash); showTrivia(true); };
   document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => history.back());
   const tog = $('#selftog');
-  if (tog) tog.onchange = () => { includeSelf = tog.checked; run(); };
+  if (tog) tog.onchange = () => { includeSelf = tog.checked; run(true); };
 
   const wds = profs.map(p => p.wd);
   if (wds.some(x => !x)) { $('#mutbox').innerHTML = '<p class="note">Not everyone here has a Wikidata link, so mutual collaborators are unavailable.</p>'; return; }
   try {
     const mlist = await collaborators(wds, 12);
+    if (!current()) return;
     $('#mutbox').innerHTML = mlist.length
       ? `<p class="note">${real.length ? 'People who have also worked with each of them.' : 'No shared credits, but these people link them: one degree of separation.'} Tap to add.</p>` +
-        personButtons(mlist, x => x.counts.join(' / ') + ' projects')
+        personButtons(mlist, x => x.counts.map((c,i) => `${esc(short[i])} ${c}`).join(' · '))
       : `<p class="note">No one on Wikidata has a credit alongside ${profs.length > 2 ? 'all of them' : 'both'}.</p>`;
     bindAdd();
   } catch { $('#mutbox').innerHTML = '<p class="note">That lookup took too long for Wikidata. Try again in a moment.</p>'; }
@@ -627,7 +630,7 @@ function trivia(works, selfOnly, profs, details, fam, n){
     const small = profs.slice().sort((a,b) => a.realCount - b.realCount)[0];
     if (small.realCount) t.push(`${Math.min(100, Math.round(works.length / small.realCount * 100))}% of ${esc(small.label)}'s ${small.realCount} films and shows include ${profs.length > 2 ? 'the others' : esc(profs.find(p => p !== small).label)}.`);
   } else {
-    t.push(`TMDB has no shared film or TV credit for them. The mutual collaborators below are the closest link.`);
+    t.push(`TMDB has no shared film or TV credit for them. Check the mutual collaborators on the results page for the closest link.`);
   }
   if (selfOnly.length) t.push(`They've also appeared together as themselves ${plural(selfOnly.length,'time')} (talk shows, award shows, documentaries).`);
   const REL = { P26: 'is married to', P451: 'has been the partner of', P40: 'is a parent of', P3373: 'is a sibling of', P1038: 'is related to' };
@@ -636,7 +639,7 @@ function trivia(works, selfOnly, profs, details, fam, n){
     if (!a || !b || a === b) return;
     const k = [a.id, b.id].sort().join() + prop;
     if (fs.has(k)) return; fs.add(k);
-    if (prop === 'P40' || REL[prop]) t.push(`Family tie: <b>${esc(a.label)}</b> ${REL[prop]} ${esc(b.label)}.`);
+    if (REL[prop]) t.push(`Family tie: <b>${esc(a.label)}</b> ${REL[prop]} ${esc(b.label)}.`);
   });
   if (profs.every(p => p.birth)) {
     const s = profs.slice().sort((a,b) => a.birth.localeCompare(b.birth));
