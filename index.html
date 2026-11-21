@@ -268,7 +268,7 @@ $('#clear').onclick = () => { people.length = 0; renderChips(); history.replaceS
 $('#go').onclick = () => run();
 PRESETS.forEach(([a,b]) => {
   const btn = document.createElement('button');
-  btn.textContent = a.split(' ').pop() + ' + ' + b.split(' ').pop();
+  btn.textContent = lastName(a) + ' + ' + lastName(b);
   btn.onclick = async () => {
     btn.disabled = true;
     try {
@@ -298,7 +298,16 @@ function zodiac(d){
   const z = [['Capricorn',20],['Aquarius',19],['Pisces',21],['Aries',20],['Taurus',21],['Gemini',21],['Cancer',23],['Leo',23],['Virgo',23],['Libra',23],['Scorpio',22],['Sagittarius',22],['Capricorn',32]];
   return day < z[m-1][1] ? z[m-1][0] : z[m][0];
 }
-const lastName = n => n.split(' ').slice(-1)[0];
+/* Surname as people say it: keeps particles (De Niro, del Toro, van Dyke, Di Caprio) and drops suffixes (Jr., III). */
+function lastName(n){
+  const parts = n.trim().split(/\s+/);
+  while (parts.length > 1 && /^(jr|sr|ii|iii|iv|v)\.?,?$/i.test(parts.at(-1))) parts.pop();
+  parts[parts.length - 1] = parts.at(-1).replace(/,$/, '');
+  let i = parts.length - 1;
+  const PARTICLE = /^(de|del|della|der|di|da|das|dos|du|la|le|van|von|ver|den|ten|ter|bin|ibn|al|el|st\.?|mac|o')$/i;
+  while (i > 1 && PARTICLE.test(parts[i - 1])) i--;
+  return parts.slice(i).join(' ');
+}
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 const listJoin = a => a.length < 3 ? a.join(' and ') : a.slice(0,-1).join(', ') + ' and ' + a.at(-1);
 const money = n => '$' + Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(n);
