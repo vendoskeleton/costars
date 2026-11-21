@@ -658,7 +658,12 @@ function trivia(works, selfOnly, profs, details, fam, n){
     const s = profs.slice().sort((a,b) => a.birth.localeCompare(b.birth));
     const days = (dateObj(s.at(-1).birth) - dateObj(s[0].birth)) / 864e5, yd = Math.floor(days / 365.25);
     if (days < 1) t.push(`They were born on the exact same day!`);
-    else t.push(`${esc(s[0].label)} is ${profs.length > 2 ? 'the oldest, ' : ''}${yd ? plural(yd,'year') : Math.round(days) + ' days'} older than ${esc(s.at(-1).label)}${profs.length > 2 ? ', the youngest' : ''}.`);
+    else {
+      const gap = yd ? plural(yd,'year') : Math.round(days) + ' days';
+      t.push(profs.some(p => p.death)   /* past tense once anyone has died */
+        ? `${esc(s[0].label)} was born ${gap} before ${esc(s.at(-1).label)}.`
+        : `${esc(s[0].label)} is ${profs.length > 2 ? 'the oldest, ' : ''}${gap} older than ${esc(s.at(-1).label)}${profs.length > 2 ? ', the youngest' : ''}.`);
+    }
     if (days >= 1 && new Set(profs.map(p => p.birth.slice(5))).size === 1) t.push(`Same birthday, different years: ${fmtDate(profs[0].birth).replace(/, \d+$/,'')}.`);
     const signs = profs.map(p => zodiac(p.birth));
     t.push(new Set(signs).size === 1 ? `${both === 'all' ? 'All' : 'Both'} ${signs[0]}s, same star sign.` : `Star signs: ${listJoin(profs.map((p,i) => `${esc(n[i])} is a ${signs[i]}`))}.`);
