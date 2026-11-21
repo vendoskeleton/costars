@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#b3122a">
+<meta name="theme-color" content="#13243f">
 <title>Costars</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
@@ -19,26 +19,38 @@
 /* VOICE: a lively double-bill night at the movies, quick and fun
    IDEA: a cinema marquee pairing two names, with the credits roll below
    PICTURE: overlapping portrait circles with the shared-project count huge between them
-   COLOUR and TYPE: velvet red band, white ground, electric blue accent; Anton for marquee numbers, Archivo for text
+   COLOUR and TYPE: four schemes (Midnight default, Teal, Popcorn, Noir) chosen from header swatches; Anton for marquee numbers, Archivo for text
    LAYOUT: one phone column: search band, marquee, trivia, films timeline, profiles, mutual collaborators */
 :root{color-scheme:light dark;
- --bg:light-dark(#ffffff,#0f0f12);--ink:light-dark(#121214,#f2f1ee);--soft:light-dark(#5d5d66,#a9a9b3);
- --line:light-dark(#e6e4e0,#2a2a31);--card:light-dark(#f7f6f3,#18181d);
- --red:#b3122a;--red2:light-dark(#8e0d20,#d4203b);--blue:light-dark(#1f5fff,#6f9bff)}
+ --ink:light-dark(#121214,#f2f1ee);--soft:light-dark(#5d5d66,#a9a9b3);
+ --hd:#13243f;--hdt:#fff;--acc:light-dark(#d9472f,#ff7a66);--blue:light-dark(#2457d6,#8fb0ff);
+ --pill:#fff;--pillt:#121214;--go:#fff;--got:#13243f;--solid:#13243f;--solidt:#fff;
+ --bg:light-dark(#f6f7fb,#0d1626);--card:light-dark(#fff,#16223a);--line:light-dark(#e3e6ef,#26344f)}
+:root[data-scheme=teal]{--hd:#0b5d5b;--hdt:#fff;--acc:light-dark(#c95f33,#f29468);--blue:light-dark(#0b6e6b,#6fd6cf);--got:#0b5d5b;--solid:#0b5d5b;
+ --bg:light-dark(#f4faf9,#0b1a1a);--card:light-dark(#fff,#132828);--line:light-dark(#d6e8e5,#21403e)}
+:root[data-scheme=popcorn]{--hd:#ffcf3f;--hdt:#1a1a1a;--acc:light-dark(#c63a26,#ff8a6b);--blue:light-dark(#b2361f,#ffb48a);--go:#1a1a1a;--got:#ffcf3f;--solid:#1a1a1a;--solidt:#ffcf3f;
+ --bg:light-dark(#fffdf5,#17150e);--card:light-dark(#fff,#24201a);--line:light-dark(#f0e6c4,#3a3426)}
+:root[data-scheme=noir]{color-scheme:dark;--hd:#121214;--hdt:#f2f1ee;--acc:#a593ff;--blue:#b3a6ff;--pill:#2a2a30;--pillt:#f2f1ee;--go:#8f7bff;--got:#fff;--solid:#8f7bff;--solidt:#fff;
+ --bg:#1b1b1f;--ink:#f2f1ee;--soft:#a9a9b3;--card:#25252b;--line:#33333a}
+.schemes{display:flex;gap:8px}
+.schemes button{width:32px;height:32px;border-radius:50%;border:2px solid color-mix(in srgb,var(--hdt) 45%,transparent);cursor:pointer;padding:0;position:relative}
+.schemes button[aria-pressed=true]{outline:3px solid var(--hdt);outline-offset:2px}
+.schemes button::after{content:'';position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:50%;background:var(--dot)}
+.toprow{display:flex;justify-content:space-between;align-items:center;gap:12px}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
 a{color:var(--blue)}
 .wrap{max-width:620px;margin:0 auto;padding:0 16px}
-header{background:var(--red);color:#fff;padding:22px 0 20px;padding-top:max(22px,env(safe-area-inset-top))}
+header{background:var(--hd);color:var(--hdt);padding:22px 0 20px;padding-top:max(22px,env(safe-area-inset-top))}
 h1{font:400 44px/1 Anton,Impact,sans-serif;margin:0}
 .tag{margin:6px 0 16px;opacity:.9;font-size:15px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-.chip{display:flex;align-items:center;gap:8px;background:#fff;color:#121214;border-radius:999px;padding:4px 6px 4px 4px;font-weight:600;font-size:15px}
+.chip{display:flex;align-items:center;gap:8px;background:var(--pill);color:var(--pillt);border-radius:999px;padding:4px 6px 4px 4px;font-weight:600;font-size:15px}
 .chip img,.chip .ph{width:36px;height:36px;border-radius:50%;object-fit:cover;object-position:top}
-.chip button{border:0;background:#eee;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:#121214}
+.chip button{border:0;background:color-mix(in srgb,var(--pillt) 10%,transparent);border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--pillt)}
 .search{position:relative}
-.search input{width:100%;font:16px Archivo,sans-serif;padding:13px 14px;border-radius:12px;border:2px solid transparent;background:#fff;color:#121214}
-.search input:focus{outline:none;border-color:#ffd0d6}
+.search input{width:100%;font:16px Archivo,sans-serif;padding:13px 14px;border-radius:12px;border:2px solid transparent;background:var(--pill);color:var(--pillt)}
+.search input:focus{outline:none;border-color:var(--acc)}
 .sugg{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--bg);color:var(--ink);border-radius:12px;box-shadow:0 12px 30px #0005;z-index:5;overflow:hidden}
 .sugg button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;color:inherit;padding:8px 10px;min-height:56px;font:15px Archivo,sans-serif;cursor:pointer;border-top:1px solid var(--line)}
 .sugg button:first-child{border-top:0}
@@ -48,23 +60,23 @@ h1{font:400 44px/1 Anton,Impact,sans-serif;margin:0}
 .ph{background:#d9d6d0;display:grid;place-items:center;color:#777;font-weight:800}
 .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .btn{font:800 16px Archivo,sans-serif;min-height:46px;padding:0 18px;border-radius:12px;border:0;cursor:pointer}
-.go{background:#fff;color:var(--red)}
+.go{background:var(--go);color:var(--got)}
 .go:disabled{opacity:.55;cursor:default}
-.ghost{background:transparent;color:#fff;border:2px solid #ffffff88}
+.ghost{background:transparent;color:var(--hdt);border:2px solid color-mix(in srgb,var(--hdt) 55%,transparent)}
 .try{margin-top:12px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.try button{background:#ffffff22;color:#fff;border:0;border-radius:999px;padding:8px 12px;font:600 14px Archivo,sans-serif;cursor:pointer}
+.try button{background:color-mix(in srgb,var(--hdt) 14%,transparent);color:var(--hdt);border:0;border-radius:999px;padding:8px 12px;font:600 14px Archivo,sans-serif;cursor:pointer}
 main{padding-bottom:48px}
 .marquee{text-align:center;padding:28px 0 8px}
 .faces{display:flex;justify-content:center;align-items:center}
 .face{width:min(34vw,150px);aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:top;border:5px solid var(--bg);box-shadow:0 8px 24px #0003;margin:0 -14px;background:#d9d6d0}
-.big{font:400 clamp(64px,22vw,110px)/1 Anton,Impact,sans-serif;color:var(--red2);margin-top:10px}
+.big{font:400 clamp(64px,22vw,110px)/1 Anton,Impact,sans-serif;color:var(--acc);margin-top:10px}
 .sub{font-size:18px;font-weight:600;text-wrap:balance}
 h2{font:400 28px/1.1 Anton,Impact,sans-serif;margin:34px 0 12px;font-weight:400}
 .trivia{list-style:none;padding:0;margin:0;display:grid;gap:10px}
 .trivia li{background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid var(--line)}
 .films{list-style:none;padding:0;margin:0}
 .films li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:14px 0;border-top:1px solid var(--line)}
-.yr{font:400 26px/1 Anton,Impact,sans-serif;color:var(--red2);white-space:nowrap}
+.yr{font:400 26px/1 Anton,Impact,sans-serif;color:var(--acc);white-space:nowrap}
 .ft{font-weight:800;font-size:17px}
 .meta{color:var(--soft);font-size:14px}
 .who{font-size:14px;margin-top:4px}
@@ -82,7 +94,7 @@ h2{font:400 28px/1.1 Anton,Impact,sans-serif;margin:34px 0 12px;font-weight:400}
 .mut small{color:var(--soft);display:block}
 .note{color:var(--soft);font-size:14px}
 .status{padding:40px 0;text-align:center;color:var(--soft)}
-.spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--red);border-radius:50%;margin:0 auto 12px;animation:s 0.8s linear infinite}
+.spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--acc);border-radius:50%;margin:0 auto 12px;animation:s 0.8s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
 .credits{font-size:13px;color:var(--soft);margin-top:36px;border-top:1px solid var(--line);padding-top:14px}
@@ -93,9 +105,9 @@ h2{font:400 28px/1.1 Anton,Impact,sans-serif;margin:34px 0 12px;font-weight:400}
 .films .post.ph{font-size:20px}
 .setup{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:24px}
 .setup input{width:100%;font:16px Archivo,sans-serif;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin:10px 0}
-.setup .btn{background:var(--red);color:#fff}
+.setup .btn{background:var(--solid);color:var(--solidt)}
 .toggle{display:flex;gap:10px;align-items:center;font-size:15px;margin:14px 0 0;min-height:44px}
-.toggle input{width:22px;height:22px;accent-color:var(--red)}
+.toggle input{width:22px;height:22px;accent-color:var(--acc)}
 .more summary{cursor:pointer;color:var(--blue);font-size:14px;padding:6px 0}
 footer.credits{padding-bottom:max(24px,env(safe-area-inset-bottom))}
 .linkbtn{background:none;border:0;color:var(--soft);text-decoration:underline;font:13px Archivo,sans-serif;cursor:pointer;padding:8px 0}
@@ -104,7 +116,13 @@ footer.credits{padding-bottom:max(24px,env(safe-area-inset-bottom))}
 <body>
 <header>
  <div class="wrap">
-  <h1>Costars</h1>
+  <div class="toprow"><h1>Costars</h1>
+   <div class="schemes" role="group" aria-label="Color scheme">
+    <button data-s="midnight" aria-label="Midnight colors" style="background:#13243f;--dot:#ff6b57"></button>
+    <button data-s="teal" aria-label="Teal colors" style="background:#0b5d5b;--dot:#e8774a"></button>
+    <button data-s="popcorn" aria-label="Popcorn colors" style="background:#ffcf3f;--dot:#d8432f"></button>
+    <button data-s="noir" aria-label="Noir colors" style="background:#121214;--dot:#8f7bff"></button>
+   </div></div>
   <p class="tag">Pick two or three people to see everything they've made together.</p>
   <div class="chips" id="chips"></div>
   <div class="search">
@@ -121,7 +139,7 @@ footer.credits{padding-bottom:max(24px,env(safe-area-inset-bottom))}
 <main class="wrap" id="out"></main>
 <footer class="wrap credits">
  <a href="https://www.themoviedb.org" target="_blank" rel="noopener"><img src="https://www.themoviedb.org/assets/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" alt="TMDB" style="height:14px;display:block;margin-bottom:8px"></a>
- <button class="btn" id="install" hidden style="background:var(--red);color:#fff;margin-bottom:12px">Install Costars app</button>
+ <button class="btn" id="install" hidden style="background:var(--solid);color:var(--solidt);margin-bottom:12px">Install Costars app</button>
  <p>Movie data and images from <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.
  Personal trivia (awards, spouses, family, height) from <a href="https://www.wikidata.org" target="_blank" rel="noopener">Wikidata</a>; some photos from <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a>.</p>
 </footer>
@@ -138,6 +156,19 @@ const IMG = (path, size='w185') => path ? `https://image.tmdb.org/t/p/${size}${p
 const SPARQL = 'https://query.wikidata.org/sparql';
 const people = [];
 let includeSelf = false, lastIds = '';
+
+
+/* ---------- color schemes ---------- */
+const SCHEMES = { midnight:'#13243f', teal:'#0b5d5b', popcorn:'#ffcf3f', noir:'#121214' };
+function setScheme(k){
+  if (!SCHEMES[k]) k = 'midnight';
+  document.documentElement.dataset.scheme = k;
+  document.querySelector('meta[name=theme-color]').content = SCHEMES[k];
+  document.querySelectorAll('.schemes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.s === k));
+  store.set('scheme', k);
+}
+document.querySelectorAll('.schemes button').forEach(b => b.onclick = () => setScheme(b.dataset.s));
+setScheme(store.get('scheme') || 'midnight');
 
 const PRESETS = [['Richard Gere','Julia Roberts'],['Robert De Niro','Martin Scorsese'],['Tom Hanks','Steven Spielberg'],['Ryan Gosling','Emma Stone'],['Kevin Bacon','Meryl Streep']];
 

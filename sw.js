@@ -1,6 +1,6 @@
 // Costars service worker: always tries the network first so updates show up right away,
 // and falls back to the saved copy when offline. Data lookups (TMDB, Wikidata) are never cached here.
-const CACHE = 'costars-v1';
+const CACHE = 'costars-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
