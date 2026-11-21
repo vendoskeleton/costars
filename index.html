@@ -329,7 +329,7 @@ function normalizeCredits(cc){
     }
     w.roles.push(role);
   };
-  (cc.cast || []).forEach(c => add(c, { kind:'cast', character: (c.character || '').trim(), episodes: c.episode_count }));
+  (cc.cast || []).forEach(c => add(c, { kind:'cast', character: (c.character || '').trim(), episodes: c.episode_count, order: c.order }));
   (cc.crew || []).forEach(c => add(c, { kind:'crew', job: c.job, episodes: c.episode_count }));
   map.forEach(w => {
     const talk = w.genreIds.some(g => TALK_NEWS.includes(g));
@@ -353,7 +353,10 @@ function roleText(w){
 }
 const character = w => { const c = w.roles.find(r => r.kind === 'cast' && r.character); return c ? c.character.replace(/\s*\(voice\)\s*/i,'').trim() : ''; };
 const behind = w => [...new Set(w.roles.filter(r => r.kind === 'crew').map(r => r.job))];
-const onScreen = w => w.roles.some(r => r.kind === 'cast');
+const starring = w => w.roles.some(r => r.kind === 'cast' && !(r.order > 12));    /* billed in the top cast, not a cameo */
+/* Crew jobs as words people use, most notable first */
+const JOB_WORDS = [['Director','director'],['Creator','creator'],['Screenplay','screenwriter'],['Writer','writer'],['Story','story writer'],['Producer','producer'],['Executive Producer','executive producer']];
+const jobWords = w => { const jobs = new Set(behind(w)); return JOB_WORDS.filter(([j]) => jobs.has(j)).map(([, word]) => word); };
 
 /* ---------- person loading ---------- */
 async function loadPerson(id){
@@ -599,20 +602,29 @@ function trivia(works, selfOnly, profs, details, fam, n){
       for (let i = 1; i < ys.length; i++) if (ys[i] - ys[i-1] > gap) { gap = ys[i] - ys[i-1]; ga = ys[i-1]; gb = ys[i]; }
       if (gap >= 5) t.push(`Longest wait between projects: <b>${gap} years</b> (${ga} to ${gb}).`);
     }
+    const offScreen = [];
     works.forEach(w => {
       const entries = profs.map((p,i) => ({ i, w: p.credits.get(w.key) }));
       const chars = entries.map(e => character(e.w) ? `${esc(n[e.i])} played <i>${esc(character(e.w))}</i>` : '').filter(Boolean);
       if (chars.length >= 2 && works.length <= 12) t.push(`In <b>${esc(w.title)}</b>, ${listJoin(chars)}.`);
       entries.forEach(e => {
-        const jobs = behind(e.w).filter(j => /director|producer|writer|screenplay|creator|story/i.test(j));
-        const actors = entries.filter(o => o.i !== e.i && onScreen(o.w));
-        if (jobs.length && actors.length) t.push(`In <b>${esc(w.title)}</b>, ${esc(n[e.i])} was ${esc(listJoin(jobs.slice(0,2).map(j => j.toLowerCase())))} while ${listJoin(actors.map(o => esc(n[o.i])))} ${actors.length > 1 ? 'were' : 'was'} on screen.`);
+        const words = jobWords(e.w), actors = entries.filter(o => o.i !== e.i && starring(o.w));
+        if (words.length && actors.length) offScreen.push({ i: e.i, words, actors: actors.map(o => o.i), title: w.title, date: w.date || '9999' });
       });
+    });
+    const groups = new Map();
+    offScreen.sort((a,b) => a.date.localeCompare(b.date)).forEach(o => { const k = o.i + '|' + o.words[0] + '|' + o.actors.join(); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); });
+    groups.forEach(list => {
+      const { i, words, actors } = list[0], cast = listJoin(actors.map(a => esc(n[a]))), be = actors.length > 1 ? 'were' : 'was';
+      if (list.length >= 3) {
+        const titles = list.map(o => `<i>${esc(o.title)}</i>`), more = titles.length - 4;
+        t.push(`${esc(n[i])} was the ${words[0]} on <b>${list.length}</b> of their projects with ${cast} on screen, including ${listJoin(titles.slice(0,4))}${more > 0 ? ` and ${more} more` : ''}.`);
+      } else list.forEach(o => t.push(`In <b>${esc(o.title)}</b>, ${esc(n[i])} was the ${listJoin(o.words.slice(0,2))} while ${cast} ${be} on screen.`));
     });
     const dc = {};
     works.forEach(w => (details[w.key]?.directors || []).forEach(d => { if (!profs.some(p => p.label === d)) dc[d] = (dc[d] || 0) + 1; }));
     const td = Object.entries(dc).sort((a,b) => b[1] - a[1])[0];
-    if (td && td[1] >= 2) t.push(`<b>${esc(td[0])}</b> directed ${td[1]} of their projects together.`);
+    if (td && td[1] >= 2 && td[1] >= works.length * 0.3) t.push(`<b>${esc(td[0])}</b> directed ${td[1]} of their projects together.`);
     const gc = {};
     works.forEach(w => (details[w.key]?.genres || []).forEach(g => gc[g] = (gc[g] || 0) + 1));
     const tg = Object.entries(gc).sort((a,b) => b[1] - a[1])[0];
