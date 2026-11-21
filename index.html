@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#b3122a">
+<title>Costars</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a lively double-bill night at the movies, quick and fun
+   IDEA: a cinema marquee pairing two names, with the credits roll below
+   PICTURE: overlapping portrait circles with the shared-project count huge between them
+   COLOUR and TYPE: velvet red band, white ground, electric blue accent; Anton for marquee numbers, Archivo for text
+   LAYOUT: one phone column: search band, marquee, trivia, films timeline, profiles, mutual collaborators */
+:root{color-scheme:light dark;
+ --bg:light-dark(#ffffff,#0f0f12);--ink:light-dark(#121214,#f2f1ee);--soft:light-dark(#5d5d66,#a9a9b3);
+ --line:light-dark(#e6e4e0,#2a2a31);--card:light-dark(#f7f6f3,#18181d);
+ --red:#b3122a;--red2:light-dark(#8e0d20,#d4203b);--blue:light-dark(#1f5fff,#6f9bff)}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
+a{color:var(--blue)}
+.wrap{max-width:620px;margin:0 auto;padding:0 16px}
+header{background:var(--red);color:#fff;padding:22px 0 20px;padding-top:max(22px,env(safe-area-inset-top))}
+h1{font:400 44px/1 Anton,Impact,sans-serif;margin:0}
+.tag{margin:6px 0 16px;opacity:.9;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.chip{display:flex;align-items:center;gap:8px;background:#fff;color:#121214;border-radius:999px;padding:4px 6px 4px 4px;font-weight:600;font-size:15px}
+.chip img,.chip .ph{width:36px;height:36px;border-radius:50%;object-fit:cover;object-position:top}
+.chip button{border:0;background:#eee;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:#121214}
+.search{position:relative}
+.search input{width:100%;font:16px Archivo,sans-serif;padding:13px 14px;border-radius:12px;border:2px solid transparent;background:#fff;color:#121214}
+.search input:focus{outline:none;border-color:#ffd0d6}
+.sugg{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--bg);color:var(--ink);border-radius:12px;box-shadow:0 12px 30px #0005;z-index:5;overflow:hidden}
+.sugg button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;color:inherit;padding:8px 10px;min-height:56px;font:15px Archivo,sans-serif;cursor:pointer;border-top:1px solid var(--line)}
+.sugg button:first-child{border-top:0}
+.sugg button:hover,.sugg button:focus{background:var(--card);outline:none}
+.sugg img,.sugg .ph{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;flex:none}
+.sugg small{display:block;color:var(--soft);font-size:13px}
+.ph{background:#d9d6d0;display:grid;place-items:center;color:#777;font-weight:800}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{font:800 16px Archivo,sans-serif;min-height:46px;padding:0 18px;border-radius:12px;border:0;cursor:pointer}
+.go{background:#fff;color:var(--red)}
+.go:disabled{opacity:.55;cursor:default}
+.ghost{background:transparent;color:#fff;border:2px solid #ffffff88}
+.try{margin-top:12px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.try button{background:#ffffff22;color:#fff;border:0;border-radius:999px;padding:8px 12px;font:600 14px Archivo,sans-serif;cursor:pointer}
+main{padding-bottom:48px}
+.marquee{text-align:center;padding:28px 0 8px}
+.faces{display:flex;justify-content:center;align-items:center}
+.face{width:min(34vw,150px);aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:top;border:5px solid var(--bg);box-shadow:0 8px 24px #0003;margin:0 -14px;background:#d9d6d0}
+.big{font:400 clamp(64px,22vw,110px)/1 Anton,Impact,sans-serif;color:var(--red2);margin-top:10px}
+.sub{font-size:18px;font-weight:600;text-wrap:balance}
+h2{font:400 28px/1.1 Anton,Impact,sans-serif;margin:34px 0 12px;font-weight:400}
+.trivia{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.trivia li{background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid var(--line)}
+.films{list-style:none;padding:0;margin:0}
+.films li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.yr{font:400 26px/1 Anton,Impact,sans-serif;color:var(--red2);white-space:nowrap}
+.ft{font-weight:800;font-size:17px}
+.meta{color:var(--soft);font-size:14px}
+.who{font-size:14px;margin-top:4px}
+.prof{display:grid;gap:14px}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.pc .top{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:14px}
+.pc .top img,.pc .top .ph{width:96px;height:120px;object-fit:cover;object-position:top;border-radius:10px}
+.pc h3{margin:0;font-size:20px;line-height:1.2}
+.facts{margin:6px 0 0;padding:0;list-style:none;font-size:14px;color:var(--soft)}
+.facts b{color:var(--ink);font-weight:600}
+.bio{padding:0 14px 14px;font-size:15px}
+.mut{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px}
+.mut button{border:0;background:none;color:inherit;text-align:center;cursor:pointer;font:14px/1.25 Archivo,sans-serif;padding:4px}
+.mut img,.mut .ph{width:72px;height:72px;border-radius:50%;object-fit:cover;object-position:top;display:block;margin:0 auto 6px}
+.mut small{color:var(--soft);display:block}
+.note{color:var(--soft);font-size:14px}
+.status{padding:40px 0;text-align:center;color:var(--soft)}
+.spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--red);border-radius:50%;margin:0 auto 12px;animation:s 0.8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.credits{font-size:13px;color:var(--soft);margin-top:36px;border-top:1px solid var(--line);padding-top:14px}
+.credits a{color:var(--soft)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.films li{grid-template-columns:52px 50px minmax(0,1fr)}
+.films .post{width:50px;height:75px;border-radius:6px;object-fit:cover;background:#d9d6d0}
+.films .post.ph{font-size:20px}
+.setup{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:24px}
+.setup input{width:100%;font:16px Archivo,sans-serif;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin:10px 0}
+.setup .btn{background:var(--red);color:#fff}
+.toggle{display:flex;gap:10px;align-items:center;font-size:15px;margin:14px 0 0;min-height:44px}
+.toggle input{width:22px;height:22px;accent-color:var(--red)}
+.more summary{cursor:pointer;color:var(--blue);font-size:14px;padding:6px 0}
+.linkbtn{background:none;border:0;color:var(--soft);text-decoration:underline;font:13px Archivo,sans-serif;cursor:pointer;padding:8px 0}
+</style>
+</head>
+<body>
+<header>
+ <div class="wrap">
+  <h1>Costars</h1>
+  <p class="tag">Pick two or three people to see everything they've made together.</p>
+  <div class="chips" id="chips"></div>
+  <div class="search">
+   <input id="q" type="search" placeholder="Search an actor, director, producer…" autocomplete="off" aria-label="Search for a person">
+   <div class="sugg" id="sugg" hidden></div>
+  </div>
+  <div class="row">
+   <button class="btn go" id="go" disabled>Find connections</button>
+   <button class="btn ghost" id="clear" hidden>Clear</button>
+  </div>
+  <div class="try" id="try"><span>Try:</span></div>
+ </div>
+</header>
+<main class="wrap" id="out"></main>
+<footer class="wrap credits">
+ <a href="https://www.themoviedb.org" target="_blank" rel="noopener"><img src="https://www.themoviedb.org/assets/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" alt="TMDB" style="height:14px;display:block;margin-bottom:8px"></a>
+ <p>Movie data and images from <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.
+ Personal trivia (awards, spouses, family, height) from <a href="https://www.wikidata.org" target="_blank" rel="noopener">Wikidata</a>; some photos from <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a>.</p>
+</footer>
+<script>
+{
+/* Paste the TMDB "API Read Access Token" (or v3 API key) between the quotes to build it in for everyone. */
+const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxZTUxNGQ4N2QxYjdiZGYxYzFmZmM5YzU3N2Q1MDJlNyIsIm5iZiI6MTc5MzMxODI2MC44NDMwMDAyLCJzdWIiOiI2YWUzZGQ3NDM0YzNiMTZkODVlZDRmNDMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.VSt9DtRgq7Zkdh_vDE6_0RlaC8OITihaorjcfvg9-XA';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = { get(k){ try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set(k,v){ try { v ? localStorage.setItem(k,v) : localStorage.removeItem(k); } catch {} } };
+const token = () => TMDB_TOKEN || store.get('tmdbToken');
+const IMG = (path, size='w185') => path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
+const SPARQL = 'https://query.wikidata.org/sparql';
+const people = [];
+let includeSelf = false, lastIds = '';
+
+const PRESETS = [['Richard Gere','Julia Roberts'],['Robert De Niro','Martin Scorsese'],['Tom Hanks','Steven Spielberg'],['Ryan Gosling','Emma Stone'],['Kevin Bacon','Meryl Streep']];
+
+/* ---------- data sources ---------- */
+const cache = new Map();
+async function tmdb(path, params = {}){
+  const t = token();
+  if (!t) throw new Error('NO_KEY');
+  const u = new URL('https://api.themoviedb.org/3' + path);
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, v));
+  const bearer = t.length > 40;
+  if (!bearer) u.searchParams.set('api_key', t);
+  const key = u.toString();
+  if (cache.has(key)) return cache.get(key);
+  const p = fetch(u, { headers: bearer ? { Authorization: 'Bearer ' + t, accept: 'application/json' } : { accept: 'application/json' } }).then(async r => {
+    if (r.status === 401) throw new Error('TMDB rejected the key');
+    if (!r.ok) throw new Error('TMDB returned ' + r.status);
+    return r.json();
+  });
+  cache.set(key, p);
+  p.catch(() => cache.delete(key));
+  return p;
+}
+async function sparql(q){
+  const r = await fetch(SPARQL + '?format=json&query=' + encodeURIComponent(q));
+  if (!r.ok) throw new Error('Wikidata returned ' + r.status);
+  return (await r.json()).results.bindings;
+}
+const v = (b,k) => b[k] ? b[k].value : '';
+const qid = uri => uri.split('/').pop();
+const commons = (file, w=240) => file ? file.replace(/^http:/,'https:') + '?width=' + w : '';
+const ph = label => `<div class="ph" aria-hidden="true">${esc((label||'?')[0])}</div>`;
+const pic = (url, label, cls='') => url ? `<img class="${cls}" src="${esc(url)}" alt="${esc(label)}" loading="lazy">` : ph(label);
+
+/* ---------- key setup ---------- */
+function showSetup(msg){
+  $('#out').innerHTML = `<section class="setup"><h2 style="margin-top:0">Connect TMDB</h2>
+   <p>${msg || 'Paste your TMDB API Read Access Token to turn on search. It stays on this device.'}</p>
+   <p class="note">Get one free at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a>.</p>
+   <input id="tok" type="password" placeholder="Paste token or API key" autocomplete="off" value="${esc(store.get('tmdbToken'))}">
+   <div class="row"><button class="btn" id="savetok">Save</button></div></section>`;
+  $('#savetok').onclick = () => { store.set('tmdbToken', $('#tok').value.trim()); cache.clear(); intro(); };
+}
+if ($('#keybtn')) $('#keybtn').onclick = () => showSetup(TMDB_TOKEN ? 'A key is already built into this page. A key saved here is used only if the built-in one is removed.' : '');
+function intro(){
+  if (!token()) return showSetup();
+  $('#out').innerHTML = `<p class="status">Add at least one person. One person shows their frequent collaborators; two or three show what they've made together.</p>`;
+}
+
+/* ---------- search ---------- */
+async function searchPeople(text){
+  const res = await tmdb('/search/person', { query: text, include_adult: 'false' });
+  return (res.results || []).slice(0, 6).map(p => ({
+    id: p.id, label: p.name, img: IMG(p.profile_path),
+    desc: [p.known_for_department, (p.known_for || []).map(k => k.title || k.name).filter(Boolean).slice(0,2).join(', ')].filter(Boolean).join(' · ')
+  }));
+}
+let timer, seqN = 0;
+$('#q').addEventListener('input', e => {
+  clearTimeout(timer);
+  const t = e.target.value.trim();
+  if (t.length < 2) { $('#sugg').hidden = true; return; }
+  timer = setTimeout(async () => {
+    const seq = ++seqN, box = $('#sugg');
+    try {
+      const list = await searchPeople(t);
+      if (seq !== seqN) return;
+      box.innerHTML = list.length ? list.map((p,i) => `<button data-i="${i}">${pic(p.img,p.label)}<span>${esc(p.label)}<small>${esc(p.desc)}</small></span></button>`).join('')
+        : '<div class="note" style="padding:14px">No people found.</div>';
+      box.hidden = false;
+      box.querySelectorAll('button').forEach(b => b.onclick = () => addPerson(list[+b.dataset.i]));
+    } catch (err) {
+      if (err.message === 'NO_KEY') { showSetup(); return; }
+      box.innerHTML = `<div class="note" style="padding:14px">Search failed: ${esc(err.message)}.</div>`;
+      box.hidden = false;
+    }
+  }, 250);
+});
+document.addEventListener('click', e => { if (!e.target.closest('.search')) $('#sugg').hidden = true; });
+
+function addPerson(p){
+  if (!p || people.some(x => x.id === p.id)) return;
+  if (people.length >= 3) people.shift();
+  people.push(p);
+  $('#q').value = ''; $('#sugg').hidden = true;
+  renderChips();
+}
+function renderChips(){
+  $('#chips').innerHTML = people.map((p,i) => `<span class="chip">${pic(p.img,p.label)}${esc(p.label)}<button aria-label="Remove ${esc(p.label)}" data-i="${i}">×</button></span>`).join('');
+  $('#chips').querySelectorAll('button').forEach(b => b.onclick = () => { people.splice(+b.dataset.i,1); renderChips(); });
+  $('#go').disabled = !people.length;
+  $('#go').textContent = people.length === 1 ? 'Show collaborators' : 'Find connections';
+  $('#clear').hidden = !people.length;
+  $('#q').placeholder = people.length ? 'Add another person…' : 'Search an actor, director, producer…';
+}
+$('#clear').onclick = () => { people.length = 0; renderChips(); history.replaceState(null,'',location.pathname); intro(); };
+$('#go').onclick = () => run();
+PRESETS.forEach(([a,b]) => {
+  const btn = document.createElement('button');
+  btn.textContent = a.split(' ').pop() + ' + ' + b.split(' ').pop();
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const found = [];
+      for (const n of [a,b]) { const r = await searchPeople(n); if (r[0]) found.push(r[0]); }
+      people.length = 0; people.push(...found); renderChips(); run();
+    } catch (err) { err.message === 'NO_KEY' ? showSetup() : fail(err); }
+    finally { btn.disabled = false; }
+  };
+  $('#try').appendChild(btn);
+});
+
+/* ---------- helpers ---------- */
+const year = d => d ? +d.slice(0,4) : null;
+const dateObj = d => d ? new Date(d.slice(0,10) + 'T00:00:00Z') : null;
+const fmtDate = d => d ? dateObj(d).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'}) : '';
+function ageAt(birth, when){
+  const b = dateObj(birth), w = when instanceof Date ? when : dateObj(when);
+  if (!b || !w) return null;
+  let a = w.getUTCFullYear() - b.getUTCFullYear();
+  if (w.getUTCMonth() < b.getUTCMonth() || (w.getUTCMonth() === b.getUTCMonth() && w.getUTCDate() < b.getUTCDate())) a--;
+  return a;
+}
+function zodiac(d){
+  if (!d) return '';
+  const m = +d.slice(5,7), day = +d.slice(8,10);
+  const z = [['Capricorn',20],['Aquarius',19],['Pisces',21],['Aries',20],['Taurus',21],['Gemini',21],['Cancer',23],['Leo',23],['Virgo',23],['Libra',23],['Scorpio',22],['Sagittarius',22],['Capricorn',32]];
+  return day < z[m-1][1] ? z[m-1][0] : z[m][0];
+}
+const lastName = n => n.split(' ').slice(-1)[0];
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const listJoin = a => a.length < 3 ? a.join(' and ') : a.slice(0,-1).join(', ') + ' and ' + a.at(-1);
+const money = n => '$' + Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(n);
+const ftIn = m => { const inch = Math.round(m * 39.3701); return `${Math.floor(inch/12)}′${inch%12}″`; };
+const country = place => place ? place.split(',').pop().trim().replace(/^USA$/,'United States').replace(/^U\.S\.A?\.?$/,'United States') : '';
+function loading(msg){ $('#out').innerHTML = `<div class="status"><div class="spin"></div>${esc(msg)}</div>`; }
+function fail(e){ $('#out').innerHTML = `<div class="status">Something went wrong: ${esc(e.message)}. Check your connection and try again.</div>`; }
+
+const SELF = /^(self|himself|herself|themselves|themself|guest|host|presenter|narrator|various)\b/i;
+const TALK_NEWS = [10767, 10763];
+function normalizeCredits(cc){
+  const map = new Map();
+  const add = (c, role) => {
+    const key = c.media_type + ':' + c.id;
+    let w = map.get(key);
+    if (!w) {
+      w = { key, id: c.id, media: c.media_type, title: c.title || c.name || '', date: c.release_date || c.first_air_date || '',
+            poster: c.poster_path, vote: c.vote_average, votes: c.vote_count, genreIds: c.genre_ids || [], roles: [] };
+      map.set(key, w);
+    }
+    w.roles.push(role);
+  };
+  (cc.cast || []).forEach(c => add(c, { kind:'cast', character: (c.character || '').trim(), episodes: c.episode_count }));
+  (cc.crew || []).forEach(c => add(c, { kind:'crew', job: c.job, episodes: c.episode_count }));
+  map.forEach(w => {
+    const talk = w.genreIds.some(g => TALK_NEWS.includes(g));
+    w.self = talk || w.roles.every(r => r.kind === 'cast' && (SELF.test(r.character) || (!r.character && w.media === 'tv')));
+  });
+  return map;
+}
+function roleText(w){
+  const cast = w.roles.filter(r => r.kind === 'cast');
+  const jobs = [...new Set(w.roles.filter(r => r.kind === 'crew').map(r => r.job))];
+  const parts = [];
+  if (cast.length) {
+    const ch = cast.map(r => r.character).filter(Boolean)[0];
+    const voice = /\(voice\)/i.test(ch || '');
+    const name = (ch || '').replace(/\s*\(voice\)\s*/i,'').trim();
+    parts.push((voice ? 'voice' : 'actor') + (name ? ` as <i>${esc(name)}</i>` : ''));
+  }
+  if (jobs.length) parts.push(esc(jobs.slice(0,3).join(', ').toLowerCase()) + (jobs.length > 3 ? '…' : ''));
+  const eps = Math.max(0, ...w.roles.map(r => r.episodes || 0));
+  return parts.join(' · ') + (w.media === 'tv' && eps ? ` <span class="meta">(${plural(eps,'episode')})</span>` : '');
+}
+const character = w => { const c = w.roles.find(r => r.kind === 'cast' && r.character); return c ? c.character.replace(/\s*\(voice\)\s*/i,'').trim() : ''; };
+const behind = w => [...new Set(w.roles.filter(r => r.kind === 'crew').map(r => r.job))];
+const onScreen = w => w.roles.some(r => r.kind === 'cast');
+
+/* ---------- person loading ---------- */
+async function loadPerson(id){
+  const p = await tmdb(`/person/${id}`, { append_to_response: 'combined_credits,external_ids' });
+  const credits = normalizeCredits(p.combined_credits || {});
+  return { id: p.id, label: p.name, img: IMG(p.profile_path, 'w342'), thumb: IMG(p.profile_path), birth: p.birthday || '', death: p.deathday || '',
+    birthplace: p.place_of_birth || '', dept: p.known_for_department || '', bio: p.biography || '', wd: (p.external_ids || {}).wikidata_id || '',
+    imdb: (p.external_ids || {}).imdb_id || '', credits, realCount: [...credits.values()].filter(w => !w.self).length,
+    awards: [], noms: 0, spouses: [], height: 0 };
+}
+const vp = ids => ids.map(i => 'wd:' + i).join(' ');
+async function enrichWikidata(profs){
+  const ids = profs.map(p => p.wd).filter(Boolean);
+  if (!ids.length) return [];
+  const [base, awards, noms, fam] = await Promise.all([
+    sparql(`SELECT ?p (SAMPLE(?h) AS ?height) (GROUP_CONCAT(DISTINCT ?sl;separator="|") AS ?spouses) WHERE { VALUES ?p { ${vp(ids)} }
+      OPTIONAL { ?p p:P2048/psn:P2048/wikibase:quantityAmount ?h }
+      OPTIONAL { ?p wdt:P26 ?s . ?s rdfs:label ?sl FILTER(LANG(?sl) IN ("en","mul")) } } GROUP BY ?p`).catch(() => []),
+    sparql(`SELECT ?p ?a ?al ?t ?fl WHERE { VALUES ?p { ${vp(ids)} } ?p p:P166 ?s . ?s ps:P166 ?a . ?a rdfs:label ?al FILTER(LANG(?al) IN ("en","mul"))
+      OPTIONAL { ?s pq:P585 ?t } OPTIONAL { ?s pq:P1686 ?f . ?f rdfs:label ?fl FILTER(LANG(?fl) IN ("en","mul")) } }`).catch(() => []),
+    sparql(`SELECT ?p (COUNT(DISTINCT ?s) AS ?n) WHERE { VALUES ?p { ${vp(ids)} } ?p p:P1411 ?s } GROUP BY ?p`).catch(() => []),
+    ids.length > 1 ? sparql(`SELECT ?a ?prop ?b WHERE { VALUES ?a { ${vp(ids)} } VALUES ?b { ${vp(ids)} }
+      VALUES ?prop { wdt:P26 wdt:P451 wdt:P40 wdt:P3373 wdt:P1038 } ?a ?prop ?b }`).catch(() => []) : []
+  ]);
+  const by = id => profs.find(p => p.wd === id);
+  base.forEach(r => { const p = by(qid(v(r,'p'))); if (p) { p.height = +v(r,'height') || 0; p.spouses = v(r,'spouses').split('|').filter(Boolean); } });
+  noms.forEach(r => { const p = by(qid(v(r,'p'))); if (p) p.noms = +v(r,'n'); });
+  awards.forEach(r => { const p = by(qid(v(r,'p'))); if (p) p.awards.push({ id: qid(v(r,'a')), label: v(r,'al'), year: year(v(r,'t')), forWork: v(r,'fl') }); });
+  profs.forEach(p => { const seen = new Set(); p.awards = p.awards.filter(a => { const k = a.id + '|' + (a.year || ''); if (seen.has(k)) return false; seen.add(k); return true; }); });
+  return fam.map(r => ({ a: by(qid(v(r,'a'))), b: by(qid(v(r,'b'))), prop: v(r,'prop').split('/').pop() }));
+}
+
+async function collaborators(wds, limit){
+  const rows = await sparql(`SELECT ?p ?w ?x WHERE { VALUES ?p { ${vp(wds)} } ?w wdt:P161|wdt:P57|wdt:P162 ?p . ?w wdt:P161|wdt:P57|wdt:P162 ?x . FILTER(?x != ?p) }`);
+  const m = new Map();
+  rows.forEach(r => {
+    const x = qid(v(r,'x')), i = wds.indexOf(qid(v(r,'p')));
+    if (wds.includes(x) || i < 0) return;
+    if (!m.has(x)) m.set(x, wds.map(() => new Set()));
+    m.get(x)[i].add(v(r,'w'));
+  });
+  const ranked = [...m.entries()].filter(([, sets]) => sets.every(st => st.size))
+    .map(([x, sets]) => ({ wd: x, counts: sets.map(st => st.size), n: sets.reduce((a, st) => a + st.size, 0) }))
+    .sort((a,b) => b.n - a.n).slice(0, limit + 8);
+  if (!ranked.length) return [];
+  const info = await sparql(`SELECT ?x (SAMPLE(?nm) AS ?name) (SAMPLE(?im) AS ?img) (SAMPLE(?tm) AS ?tmdb) WHERE { VALUES ?x { ${vp(ranked.map(r => r.wd))} }
+    ?x wdt:P31 wd:Q5 . ?x rdfs:label ?nm FILTER(LANG(?nm) IN ("en","mul")) OPTIONAL { ?x wdt:P18 ?im } OPTIONAL { ?x wdt:P4985 ?tm } } GROUP BY ?x`);
+  const byId = new Map(info.map(r => [qid(v(r,'x')), r]));
+  return ranked.filter(r => byId.has(r.wd)).slice(0, limit).map(r => {
+    const b = byId.get(r.wd);
+    return { ...r, label: v(b,'name'), img: commons(v(b,'img'),160), tmdb: v(b,'tmdb') };
+  });
+}
+
+/* ---------- run ---------- */
+async function run(){
+  if (!people.length) return;
+  if (!token()) return showSetup();
+  const ids = people.map(p => p.id);
+  lastIds = ids.join('-');
+  history.replaceState(null, '', '#' + lastIds);
+  loading(people.length === 1 ? 'Rolling the credits…' : 'Checking the call sheets…');
+  try {
+    const profs = await Promise.all(ids.map(loadPerson));
+    if (profs.length === 1) await runSingle(profs[0]); else await runCompare(profs);
+  } catch (e) { e.message === 'NO_KEY' ? showSetup() : fail(e); }
+}
+
+function marquee(ps, big, sub){
+  return `<section class="marquee"><div class="faces">${ps.map(p => p.img ? `<img class="face" src="${esc(p.img)}" alt="${esc(p.label)}">` : `<div class="face ph" style="font-size:48px">${esc(p.label[0])}</div>`).join('')}</div>
+   <div class="big">${big}</div><div class="sub">${sub}</div></section>`;
+}
+function profileCard(p){
+  const age = p.birth ? (p.death ? `died ${fmtDate(p.death)}, aged ${ageAt(p.birth,p.death)}` : `age ${ageAt(p.birth, new Date())}`) : '';
+  const oscars = p.awards.filter(a => /^Academy Award/i.test(a.label)).length;
+  const facts = [
+    p.dept && `<li><b>Known for</b> ${esc(p.dept.toLowerCase())}</li>`,
+    p.birth && `<li><b>Born</b> ${esc(fmtDate(p.birth))}${p.birthplace ? ' in ' + esc(p.birthplace) : ''} · ${esc(age)}</li>`,
+    p.birth && `<li><b>Star sign</b> ${zodiac(p.birth)}</li>`,
+    p.height > 1 && `<li><b>Height</b> ${ftIn(p.height)} (${Math.round(p.height*100)} cm)</li>`,
+    `<li><b>Credits</b> ${p.realCount} films and shows</li>`,
+    (p.awards.length || p.noms) && `<li><b>Awards</b> ${plural(p.awards.length,'win')}${p.noms ? ', ' + plural(p.noms,'nomination') : ''}${oscars ? ` · ${plural(oscars,'Oscar')}` : ''}</li>`,
+    p.spouses.length && `<li><b>Spouse${p.spouses.length > 1 ? 's' : ''}</b> ${esc(p.spouses.join(', '))}</li>`
+  ].filter(Boolean).join('');
+  const links = [`<a href="https://www.themoviedb.org/person/${p.id}" target="_blank" rel="noopener">TMDB</a>`,
+    p.imdb && `<a href="https://www.imdb.com/name/${esc(p.imdb)}" target="_blank" rel="noopener">IMDb</a>`].filter(Boolean).join(' · ');
+  const bio = p.bio ? (p.bio.length > 360
+    ? `<details class="more"><summary>${esc(p.bio.slice(0, 300).replace(/\s+\S*$/,''))}… Read more</summary>${esc(p.bio).replace(/\n+/g,'<br><br>')}</details>`
+    : esc(p.bio)) : '';
+  return `<article class="pc"><div class="top">${pic(p.img,p.label)}<div><h3>${esc(p.label)}</h3><ul class="facts">${facts}</ul></div></div>
+    <div class="bio">${bio}<div class="meta" style="margin-top:8px">${links}</div></div></article>`;
+}
+function personButtons(list, labelFn){
+  return `<div class="mut" id="mut">${list.map(x => `<button data-id="${x.tmdb || ''}" data-name="${esc(x.label)}" data-img="${esc(x.img)}">${pic(x.img,x.label)}${esc(x.label)}<small>${labelFn(x)}</small></button>`).join('')}</div>`;
+}
+function bindAdd(){
+  document.querySelectorAll('#mut button').forEach(b => b.onclick = async () => {
+    let id = +b.dataset.id;
+    if (!id) { const r = await searchPeople(b.dataset.name).catch(() => []); if (!r[0]) return; id = r[0].id; }
+    addPerson({ id, label: b.dataset.name, img: b.dataset.img, desc: '' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+async function runSingle(p){
+  await enrichWikidata([p]);
+  const works = [...p.credits.values()].filter(w => !w.self);
+  const sorted = works.filter(w => w.votes >= 300).sort((a,b) => b.vote - a.vote);
+  const html = [marquee([p], p.realCount, `films and shows for ${esc(p.label)}`), `<h2>Profile</h2><div class="prof">${profileCard(p)}</div>`];
+  if (sorted.length) html.push(`<h2>Highest rated</h2><ul class="films">${sorted.slice(0,5).map(w => filmRow(w, [{p, w}], {})).join('')}</ul>`);
+  html.push(`<h2>Frequent collaborators</h2><div id="mutbox"><div class="status"><div class="spin"></div>Finding regular collaborators…</div></div>`);
+  $('#out').innerHTML = html.join('');
+  if (!p.wd) { $('#mutbox').innerHTML = '<p class="note">No Wikidata link for this person, so collaborators are unavailable.</p>'; return; }
+  try {
+    const list = await collaborators([p.wd], 15);
+    $('#mutbox').innerHTML = `<p class="note">Tap someone to add them, then hit Find connections.</p>` + personButtons(list, x => plural(x.n,'project'));
+    bindAdd();
+  } catch { $('#mutbox').innerHTML = '<p class="note">Wikidata took too long. Try again in a moment.</p>'; }
+}
+function dedupePeople(rows){
+  const m = new Map();
+  rows.forEach(r => { const id = qid(v(r,'x')); if (!m.has(id)) m.set(id, { wd: id, label: v(r,'name'), img: commons(v(r,'img'),160), tmdb: v(r,'tmdb'), n: +v(r,'n'), row: r }); });
+  return [...m.values()];
+}
+
+function filmRow(w, entries, details){
+  const d = details[w.key] || {};
+  const meta = [w.media === 'tv' ? 'TV' : 'Film', (d.genres || []).slice(0,2).join(', '), d.directors && d.directors.length ? 'dir. ' + d.directors.slice(0,2).join(', ') : '',
+    w.vote && w.votes >= 50 ? `★ ${w.vote.toFixed(1)}` : '', d.revenue ? money(d.revenue) + ' box office' : ''].filter(Boolean).map(esc).join(' · ');
+  const who = entries.length > 1 ? entries.map(({p, w: pw}) => `<div><b>${esc(lastName(p.label))}</b> · ${roleText(pw)}</div>`).join('') : `<div>${roleText(entries[0].w)}</div>`;
+  return `<li><div class="yr">${year(w.date) || '—'}</div>${pic(IMG(w.poster,'w154'), w.title, 'post')}<div>
+    <div class="ft"><a href="https://www.themoviedb.org/${w.media}/${w.id}" target="_blank" rel="noopener">${esc(w.title)}</a></div><div class="meta">${meta}</div><div class="who">${who}</div></div></li>`;
+}
+
+async function runCompare(profs){
+  const keys = [...profs[0].credits.keys()].filter(k => profs.every(p => p.credits.has(k)));
+  const shared = keys.map(k => profs[0].credits.get(k));
+  const real = shared.filter(w => !profs.some(p => p.credits.get(w.key).self));
+  const selfOnly = shared.filter(w => !real.includes(w));
+  const list = (includeSelf ? shared : real).slice().sort((a,b) => (a.date || '9999').localeCompare(b.date || '9999'));
+
+  const details = {};
+  const toFetch = real.slice().sort((a,b) => (b.votes||0) - (a.votes||0)).slice(0, 25);
+  const [fam] = await Promise.all([
+    enrichWikidata(profs).catch(() => []),
+    ...toFetch.map(w => tmdb(`/${w.media}/${w.id}`, w.media === 'movie' ? { append_to_response: 'credits' } : {}).then(d => {
+      details[w.key] = { genres: (d.genres || []).map(g => g.name), runtime: d.runtime || 0, revenue: d.revenue || 0, budget: d.budget || 0,
+        directors: w.media === 'movie' ? (d.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name) : (d.created_by || []).map(c => c.name),
+        tagline: d.tagline || '' };
+    }).catch(() => {}))
+  ]);
+
+  const names = profs.map(p => p.label), short = profs.map(p => lastName(p.label));
+  const html = [];
+  html.push(marquee(profs, real.length, `${real.length === 1 ? 'project' : 'projects'} together for ${esc(listJoin(names))}`));
+  html.push(`<h2>Trivia</h2><ul class="trivia">${trivia(real, selfOnly, profs, details, fam || [], short).map(t => `<li>${t}</li>`).join('')}</ul>`);
+  if (list.length) {
+    html.push(`<h2>Together on screen</h2>`);
+    if (selfOnly.length) html.push(`<label class="toggle"><input type="checkbox" id="selftog" ${includeSelf ? 'checked' : ''}> Include ${plural(selfOnly.length,'appearance')} as themselves (talk shows, award shows)</label>`);
+    html.push(`<ul class="films">${list.map(w => filmRow(w, profs.map(p => ({ p, w: p.credits.get(w.key) })), details)).join('')}</ul>`);
+  } else if (selfOnly.length) {
+    html.push(`<label class="toggle"><input type="checkbox" id="selftog"> Show ${plural(selfOnly.length,'appearance')} together as themselves</label>`);
+  }
+  html.push(`<h2>Profiles</h2><div class="prof">${profs.map(profileCard).join('')}</div>`);
+  html.push(`<h2>Mutual collaborators</h2><div id="mutbox"><div class="status"><div class="spin"></div>Finding people who've worked with ${profs.length > 2 ? 'all of them' : 'both'}…</div></div>`);
+  $('#out').innerHTML = html.join('');
+  const tog = $('#selftog');
+  if (tog) tog.onchange = () => { includeSelf = tog.checked; run(); };
+
+  const wds = profs.map(p => p.wd);
+  if (wds.some(x => !x)) { $('#mutbox').innerHTML = '<p class="note">Not everyone here has a Wikidata link, so mutual collaborators are unavailable.</p>'; return; }
+  try {
+    const mlist = await collaborators(wds, 12);
+    $('#mutbox').innerHTML = mlist.length
+      ? `<p class="note">${real.length ? 'People who have also worked with each of them.' : 'No shared credits, but these people link them: one degree of separation.'} Tap to add.</p>` +
+        personButtons(mlist, x => x.counts.join(' / ') + ' projects')
+      : `<p class="note">No one on Wikidata has a credit alongside ${profs.length > 2 ? 'all of them' : 'both'}.</p>`;
+    bindAdd();
+  } catch { $('#mutbox').innerHTML = '<p class="note">That lookup took too long for Wikidata. Try again in a moment.</p>'; }
+}
+
+function trivia(works, selfOnly, profs, details, fam, n){
+  const t = [];
+  const both = profs.length > 2 ? 'all' : 'both';
+  const dated = works.filter(w => w.date).sort((a,b) => a.date.localeCompare(b.date));
+  if (works.length) {
+    if (dated.length) {
+      const a = year(dated[0].date), b = year(dated.at(-1).date);
+      t.push(a === b ? `All of their shared work came out in <b>${a}</b>.` : `Their shared work spans <b>${b - a} years</b>, from ${a} to ${b}.`);
+      const first = dated[0], last = dated.at(-1);
+      t.push(`First together: <b>${esc(first.title)}</b> (${year(first.date)}).${last !== first ? ` Most recent: <b>${esc(last.title)}</b> (${year(last.date)}).` : ''}`);
+      if (profs.every(p => p.birth)) t.push(`When ${esc(first.title)} came out, ${listJoin(profs.map((p,i) => `${esc(n[i])} was ${ageAt(p.birth, first.date)}`))}.`);
+      const ys = [...new Set(dated.map(w => year(w.date)))];
+      let gap = 0, ga, gb;
+      for (let i = 1; i < ys.length; i++) if (ys[i] - ys[i-1] > gap) { gap = ys[i] - ys[i-1]; ga = ys[i-1]; gb = ys[i]; }
+      if (gap >= 5) t.push(`Longest wait between projects: <b>${gap} years</b> (${ga} to ${gb}).`);
+    }
+    works.forEach(w => {
+      const entries = profs.map((p,i) => ({ i, w: p.credits.get(w.key) }));
+      const chars = entries.map(e => character(e.w) ? `${esc(n[e.i])} played <i>${esc(character(e.w))}</i>` : '').filter(Boolean);
+      if (chars.length >= 2 && works.length <= 12) t.push(`In <b>${esc(w.title)}</b>, ${listJoin(chars)}.`);
+      entries.forEach(e => {
+        const jobs = behind(e.w).filter(j => /director|producer|writer|screenplay|creator|story/i.test(j));
+        const actors = entries.filter(o => o.i !== e.i && onScreen(o.w));
+        if (jobs.length && actors.length) t.push(`In <b>${esc(w.title)}</b>, ${esc(n[e.i])} was ${esc(listJoin(jobs.slice(0,2).map(j => j.toLowerCase())))} while ${listJoin(actors.map(o => esc(n[o.i])))} ${actors.length > 1 ? 'were' : 'was'} on screen.`);
+      });
+    });
+    const dc = {};
+    works.forEach(w => (details[w.key]?.directors || []).forEach(d => { if (!profs.some(p => p.label === d)) dc[d] = (dc[d] || 0) + 1; }));
+    const td = Object.entries(dc).sort((a,b) => b[1] - a[1])[0];
+    if (td && td[1] >= 2) t.push(`<b>${esc(td[0])}</b> directed ${td[1]} of their projects together.`);
+    const gc = {};
+    works.forEach(w => (details[w.key]?.genres || []).forEach(g => gc[g] = (gc[g] || 0) + 1));
+    const tg = Object.entries(gc).sort((a,b) => b[1] - a[1])[0];
+    if (tg && tg[1] >= 2) t.push(`Their go-to genre together: <b>${esc(tg[0])}</b> (${tg[1]} projects).`);
+    const movies = works.filter(w => details[w.key]);
+    const rev = movies.reduce((s,w) => s + details[w.key].revenue, 0);
+    if (rev > 0) {
+      const top = movies.slice().sort((a,b) => details[b.key].revenue - details[a.key].revenue)[0];
+      t.push(`Their films together earned about <b>${money(rev)}</b> at the box office. The biggest: <b>${esc(top.title)}</b> with ${money(details[top.key].revenue)}.`);
+    }
+    const mins = movies.reduce((s,w) => s + (w.media === 'movie' ? details[w.key].runtime : 0), 0);
+    if (mins > 0) t.push(`Watching all their movies together back to back would take about <b>${Math.round(mins / 6) / 10} hours</b>.`);
+    const rated = works.filter(w => w.votes >= 200).sort((a,b) => b.vote - a.vote);
+    if (rated.length >= 2) t.push(`Best rated together on TMDB: <b>${esc(rated[0].title)}</b> (★ ${rated[0].vote.toFixed(1)}). Lowest: ${esc(rated.at(-1).title)} (★ ${rated.at(-1).vote.toFixed(1)}).`);
+    const small = profs.slice().sort((a,b) => a.realCount - b.realCount)[0];
+    if (small.realCount) t.push(`${Math.min(100, Math.round(works.length / small.realCount * 100))}% of ${esc(small.label)}'s ${small.realCount} films and shows include ${profs.length > 2 ? 'the others' : esc(profs.find(p => p !== small).label)}.`);
+  } else {
+    t.push(`TMDB has no shared film or TV credit for them. The mutual collaborators below are the closest link.`);
+  }
+  if (selfOnly.length) t.push(`They've also appeared together as themselves ${plural(selfOnly.length,'time')} (talk shows, award shows, documentaries).`);
+  const REL = { P26: 'is married to', P451: 'has been the partner of', P40: 'is a parent of', P3373: 'is a sibling of', P1038: 'is related to' };
+  const fs = new Set();
+  fam.forEach(({a, b, prop}) => {
+    if (!a || !b || a === b) return;
+    const k = [a.id, b.id].sort().join() + prop;
+    if (fs.has(k)) return; fs.add(k);
+    if (prop === 'P40' || REL[prop]) t.push(`Family tie: <b>${esc(a.label)}</b> ${REL[prop]} ${esc(b.label)}.`);
+  });
+  if (profs.every(p => p.birth)) {
+    const s = profs.slice().sort((a,b) => a.birth.localeCompare(b.birth));
+    const days = (dateObj(s.at(-1).birth) - dateObj(s[0].birth)) / 864e5, yd = Math.floor(days / 365.25);
+    if (days < 1) t.push(`They were born on the exact same day!`);
+    else t.push(`${esc(s[0].label)} is ${profs.length > 2 ? 'the oldest, ' : ''}${yd ? plural(yd,'year') : Math.round(days) + ' days'} older than ${esc(s.at(-1).label)}${profs.length > 2 ? ', the youngest' : ''}.`);
+    if (days >= 1 && new Set(profs.map(p => p.birth.slice(5))).size === 1) t.push(`Same birthday, different years: ${fmtDate(profs[0].birth).replace(/, \d+$/,'')}.`);
+    const signs = profs.map(p => zodiac(p.birth));
+    t.push(new Set(signs).size === 1 ? `${both === 'all' ? 'All' : 'Both'} ${signs[0]}s, same star sign.` : `Star signs: ${listJoin(profs.map((p,i) => `${esc(n[i])} is a ${signs[i]}`))}.`);
+  }
+  if (profs.every(p => p.birthplace)) {
+    const towns = profs.map(p => p.birthplace.split(',')[0].trim());
+    if (new Set(profs.map(p => p.birthplace)).size === 1) t.push(`They were born in the same place: <b>${esc(profs[0].birthplace)}</b>.`);
+    else if (new Set(profs.map(p => country(p.birthplace))).size === 1) t.push(`Born in different places, but ${both} in ${esc(country(profs[0].birthplace))}: ${listJoin(profs.map((p,i) => `${esc(n[i])} in ${esc(towns[i])}`))}.`);
+    else t.push(`Hometowns: ${listJoin(profs.map((p,i) => `${esc(n[i])} was born in ${esc(p.birthplace)}`))}.`);
+  }
+  if (profs.length === 2 && profs.every(p => p.height > 1)) {
+    const d = Math.round(Math.abs(profs[0].height - profs[1].height) * 100);
+    const tall = profs[0].height > profs[1].height ? profs[0] : profs[1];
+    t.push(d >= 2 ? `${esc(tall.label)} is about ${d} cm (${Math.round(d / 2.54)} in) taller.` : `They're practically the same height.`);
+  }
+  const sets = profs.map(p => new Set(p.awards.map(a => a.id)));
+  const sharedA = [...sets[0]].filter(id => sets.every(s => s.has(id)));
+  if (sharedA.length) {
+    const labels = sharedA.map(id => profs[0].awards.find(a => a.id === id).label);
+    t.push(`${both === 'all' ? 'All of them have' : 'Both have'} won ${labels.length > 3 ? `${labels.length} of the same awards, including ` : 'the '}<b>${esc(listJoin(labels.slice(0,3)))}</b>.`);
+  }
+  const titles = new Set(works.map(w => w.title.toLowerCase()));
+  profs.forEach(p => p.awards.filter(a => a.forWork && titles.has(a.forWork.toLowerCase())).slice(0,2)
+    .forEach(a => t.push(`${esc(p.label)} won the <b>${esc(a.label)}</b>${a.year ? ` (${a.year})` : ''} for ${esc(a.forWork)}, one of their shared projects.`)));
+  if (profs.some(p => p.awards.length)) t.push(`Award wins on record: ${listJoin(profs.map((p,i) => `${esc(n[i])} ${p.awards.length}`))}.`);
+  return t;
+}
+
+/* ---------- start ---------- */
+async function boot(){
+  const ids = (location.hash.slice(1).match(/\d+/g) || []).slice(0,3).map(Number);
+  if (!ids.length || !token()) return intro();
+  loading('Loading…');
+  try {
+    const ps = await Promise.all(ids.map(id => tmdb(`/person/${id}`)));
+    ps.forEach(p => people.push({ id: p.id, label: p.name, img: IMG(p.profile_path), desc: '' }));
+    renderChips(); run();
+  } catch (e) { e.message === 'NO_KEY' ? showSetup() : fail(e); }
+}
+boot();
+}
+</script>
+</body>
+</html>
