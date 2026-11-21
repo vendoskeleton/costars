@@ -68,10 +68,8 @@ main{padding-bottom:48px}
 .faces{display:flex;justify-content:center;align-items:center}
 .faces.n3 .face{width:min(31vw,150px)}
 .faces.n1 .face{width:min(46vw,200px)}
-.face{position:relative;overflow:hidden;flex:none;width:min(40vw,176px);aspect-ratio:1;border-radius:50%;border:5px solid var(--bg);box-shadow:0 8px 24px #0003;margin:0 -14px;background:#d9d6d0}
-.face::before{content:'';position:absolute;inset:-15%;background:var(--bgimg,none) center 30%/cover;filter:blur(12px) brightness(.85)}
+.face{position:relative;overflow:hidden;clip-path:circle(50%);flex:none;width:min(40vw,176px);aspect-ratio:1;border-radius:50%;border:5px solid var(--bg);box-shadow:0 8px 24px #0003;margin:0 -14px;background:#d9d6d0}
 .face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 42%}
-.face img.aligned{inset:auto;max-width:none;object-fit:fill}
 .face::after{content:'';position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--ink) 30%,transparent);pointer-events:none}
 .minifaces .face::after{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ink) 30%,transparent)}
 .big{font:400 clamp(64px,22vw,110px)/1 Anton,Impact,sans-serif;color:var(--acc);margin-top:10px}
@@ -431,20 +429,33 @@ function findFace(src){
     if (!d) return null;
     const P = d.landmarks.positions, avg = a => a.reduce((s,p) => ({ x: s.x + p.x / a.length, y: s.y + p.y / a.length }), { x: 0, y: 0 });
     const e1 = avg(P.slice(36,42)), e2 = avg(P.slice(42,48));
-    return { W: im.naturalWidth, H: im.naturalHeight, bw: d.detection.box.width, ex: (e1.x + e2.x) / 2, ey: (e1.y + e2.y) / 2 };
+    return { im, W: im.naturalWidth, H: im.naturalHeight, bw: d.detection.box.width, ex: (e1.x + e2.x) / 2, ey: (e1.y + e2.y) / 2 };
   })().catch(() => null));
   return faceCache.get(src);
 }
+/* Draw the framed headshot into a square picture, so every browser shows it the same way */
 function placeFace(img, f){
-  const FACE = 0.40, EYE = 0.44;                       /* face width and eye line, as parts of the circle */
+  const FACE = 0.40, EYE = 0.44, N = 360;            /* face width and eye line, as parts of the circle */
   let s = Math.max(FACE / f.bw, 0.8 * Math.max(1 / f.W, 1 / f.H));
   const w = f.W * s, h = f.H * s;
   let left = 0.5 - f.ex * s, top = EYE - f.ey * s;
   const soft = (v, lo, hi) => (v > hi && v - hi < 0.1) ? hi : (v < lo && lo - v < 0.1) ? lo : v;  /* hide small gaps */
   left = soft(left, Math.min(0, 1 - w), Math.max(0, 1 - w));
   top = soft(top, Math.min(0, 1 - h), 0);
-  img.style.cssText = `width:${w*100}%;height:${h*100}%;left:${left*100}%;top:${top*100}%`;
-  img.classList.add('aligned');
+  try {
+    const c = document.createElement('canvas'); c.width = c.height = N;
+    const ctx = c.getContext('2d');
+    /* soft backdrop for any edges the photo doesn't reach: shrink it tiny, then stretch it back up */
+    const t = document.createElement('canvas'); t.width = 12; t.height = 18;
+    t.getContext('2d').drawImage(f.im, 0, 0, 12, 18);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(t, -N * 0.1, -N * 0.1, N * 1.2, N * 1.8);
+    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(0, 0, N, N);
+    ctx.drawImage(f.im, left * N, top * N, w * N, h * N);
+    img.src = c.toDataURL('image/jpeg', 0.9);
+    img.style.objectPosition = '50% 50%';
+    img.classList.add('aligned');
+  } catch { /* keep the simple framing */ }
 }
 function alignFaces(root){
   root.querySelectorAll('.face img:not(.aligned)').forEach(img => findFace(img.src).then(f => { if (f) placeFace(img, f); }));
@@ -467,7 +478,7 @@ async function run(keepScroll = false){
 }
 
 function marquee(ps, big, sub){
-  return `<section class="marquee"><div class="faces n${ps.length}">${ps.map(p => (p.img ? `<div class="face" style="--bgimg:url('${esc(p.img)}')"><img src="${esc(p.img)}" alt="${esc(p.label)}"></div>` : `<div class="face ph" style="font-size:48px">${esc(p.label[0])}</div>`)).join('')}</div>
+  return `<section class="marquee"><div class="faces n${ps.length}">${ps.map(p => (p.img ? `<div class="face"><img src="${esc(p.img)}" alt="${esc(p.label)}"></div>` : `<div class="face ph" style="font-size:48px">${esc(p.label[0])}</div>`)).join('')}</div>
    <div class="big">${big}</div><div class="sub">${sub}</div></section>`;
 }
 function profileCard(p){
@@ -562,7 +573,7 @@ async function runCompare(profs, current){
   html.push(`<button class="btn trivbtn" id="trivbtn">Shared Trivia <span class="meta" style="color:inherit;opacity:.8">(${triviaItems.length} facts)</span> →</button>`);
   html.push(`<h2>Profiles</h2><div class="prof">${profs.map(profileCard).join('')}</div>`);
   html.push(`<h2>Mutual collaborators</h2><div id="mutbox"><div class="status"><div class="spin"></div>Finding people who've worked with ${profs.length > 2 ? 'all of them' : 'both'}…</div></div>`);
-  const faces = profs.map(p => (p.img ? `<div class="face" style="--bgimg:url('${esc(p.img)}')"><img src="${esc(p.img)}" alt="${esc(p.label)}"></div>` : `<div class="face ph" style="font-size:24px">${esc(p.label[0])}</div>`)).join('');
+  const faces = profs.map(p => (p.img ? `<div class="face"><img src="${esc(p.img)}" alt="${esc(p.label)}"></div>` : `<div class="face ph" style="font-size:24px">${esc(p.label[0])}</div>`)).join('');
   $('#out').innerHTML = `<div id="mainView">${html.join('')}</div>
     <div id="trivView" hidden><button class="btn back" data-back>← Back to results</button>
      <div class="trivhead"><div class="minifaces">${faces}</div><h2 style="margin:0">Shared Trivia</h2><div class="meta">${esc(listJoin(names))}</div></div>
