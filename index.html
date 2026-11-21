@@ -92,7 +92,8 @@ h2{font:400 28px/1.1 Anton,Impact,sans-serif;margin:34px 0 12px;font-weight:400}
 .pc h3{margin:0;font-size:20px;line-height:1.2}
 .facts{margin:6px 0 0;padding:0;list-style:none;font-size:14px;color:var(--soft)}
 .facts b{color:var(--ink);font-weight:600}
-.bio{padding:0 14px 14px;font-size:15px}
+.bio{padding:0 14px 14px;font-size:15px;color:light-dark(#000,#fff)}
+:root[data-scheme=noir] .bio{color:#fff}
 .mut{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px}
 .mut button{border:0;background:none;color:inherit;text-align:center;cursor:pointer;font:14px/1.25 Archivo,sans-serif;padding:4px}
 .mut img,.mut .ph{width:72px;height:72px;border-radius:50%;object-fit:cover;object-position:top;display:block;margin:0 auto 6px}
@@ -113,7 +114,8 @@ h2{font:400 28px/1.1 Anton,Impact,sans-serif;margin:34px 0 12px;font-weight:400}
 .setup .btn{background:var(--solid);color:var(--solidt)}
 .toggle{display:flex;gap:10px;align-items:center;font-size:15px;margin:14px 0 0;min-height:44px}
 .toggle input{width:22px;height:22px;accent-color:var(--acc)}
-.more summary{cursor:pointer;color:var(--blue);font-size:14px;padding:6px 0}
+.more summary{cursor:pointer;list-style:none;padding:0 0 6px}.more summary::-webkit-details-marker{display:none}
+.more .rm{color:var(--blue);font-weight:600;white-space:nowrap}.more .less,.more[open] .preview,.more[open] .mo{display:none}.more[open] .less{display:inline}
 footer.credits{padding-bottom:max(24px,env(safe-area-inset-bottom))}
 .trivbtn{display:block;width:100%;margin:24px 0 4px;background:var(--solid);color:var(--solidt);font-size:17px;min-height:52px}
 .back{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink);margin:20px 0 6px}
@@ -474,7 +476,7 @@ function profileCard(p){
   const links = [`<a href="https://www.themoviedb.org/person/${p.id}" target="_blank" rel="noopener">TMDB</a>`,
     p.imdb && `<a href="https://www.imdb.com/name/${esc(p.imdb)}" target="_blank" rel="noopener">IMDb</a>`].filter(Boolean).join(' · ');
   const bio = p.bio ? (p.bio.length > 360
-    ? `<details class="more"><summary>${esc(p.bio.slice(0, 300).replace(/\s+\S*$/,''))}… Read more</summary>${esc(p.bio).replace(/\n+/g,'<br><br>')}</details>`
+    ? `<details class="more"><summary><span class="preview">${esc(p.bio.slice(0, 300).replace(/\s+\S*$/,''))}… </span><span class="rm mo">Read more</span><span class="rm less">Show less</span></summary>${esc(p.bio).replace(/\n+/g,'<br><br>')}</details>`
     : esc(p.bio)) : '';
   return `<article class="pc"><div class="top">${pic(p.img,p.label)}<div><h3>${esc(p.label)}</h3><ul class="facts">${facts}</ul></div></div>
     <div class="bio">${bio}<div class="meta" style="margin-top:8px">${links}</div></div></article>`;
