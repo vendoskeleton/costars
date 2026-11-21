@@ -423,7 +423,8 @@ const faceCache = new Map();
 function findFace(src){
   if (!faceCache.has(src)) faceCache.set(src, (async () => {
     const fa = await loadFaceApi();
-    const im = new Image(); im.crossOrigin = 'anonymous'; im.src = src + (src.includes('?') ? '&' : '?') + 'cors=1'; await im.decode();  /* separate URL so a cached non-CORS copy isn't reused */
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = src + (src.includes('?') ? '&' : '?') + 'cors=1'; });  /* separate URL so a cached non-CORS copy isn't reused */
     const dets = await fa.detectAllFaces(im, new fa.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.35 })).withFaceLandmarks(true);
     const d = dets.sort((a,b) => b.detection.box.area - a.detection.box.area)[0];
     if (!d) return null;
