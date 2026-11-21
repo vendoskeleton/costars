@@ -618,7 +618,7 @@ function trivia(works, selfOnly, profs, details, fam, n){
       const { i, words, actors } = list[0], cast = listJoin(actors.map(a => esc(n[a]))), be = actors.length > 1 ? 'were' : 'was';
       if (list.length >= 3) {
         const titles = list.map(o => `<i>${esc(o.title)}</i>`), more = titles.length - 4;
-        t.push(`${esc(n[i])} was the ${words[0]} on <b>${list.length}</b> of their projects with ${cast} on screen, including ${listJoin(titles.slice(0,4))}${more > 0 ? ` and ${more} more` : ''}.`);
+        t.push(`${esc(n[i])} was the ${words[0]} on <b>${list.length}</b> of their projects with ${cast} on screen, including ${more > 0 ? titles.slice(0,4).join(', ') + `, and ${more} more` : listJoin(titles)}.`);
       } else list.forEach(o => t.push(`In <b>${esc(o.title)}</b>, ${esc(n[i])} was the ${listJoin(o.words.slice(0,2))} while ${cast} ${be} on screen.`));
     });
     const dc = {};
